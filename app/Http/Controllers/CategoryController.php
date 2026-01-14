@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Test\Constraint\ResponseIsUnprocessable;
 
 class CategoryController extends Controller
 {
@@ -83,16 +84,52 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Category $category)
+    public function update(Request $request, $id)
     {
-        //
+        try {
+           $users = Category::findOrFail($id);
+            $valedated = $request->validate([
+                "name" => ["sometimes","string","min:3","max:15"]
+            ]);
+           $user =  $users->update($valedated);
+            return response()->json([
+                "message"=>"successfully",
+                "data" =>$user
+            ],200);
+            
+        } catch (\Throwable $th) {
+            return response()->json([
+                "message"=>$th->getMessage()
+            ]);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Category $category)
-    {
-        //
+    public function destroy($id)
+{
+    try {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json([
+                'message' => 'Category not found'
+            ], 404);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'message' => 'Category deleted successfully'
+        ], 200);
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => 'Server error',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
 }
