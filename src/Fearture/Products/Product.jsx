@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     FiSearch,
     FiFilter,
@@ -9,23 +9,107 @@ import {
     FiShoppingBag,
     FiAlertCircle,
     FiTrendingUp,
-    FiTag
+    FiTag,
+    FiX,
+    FiTrash2
 } from 'react-icons/fi';
 
 const Product = () => {
-    // Product data from the table
-    const products = [
-        { name: "Cherry Delight", id: "#KP267400", price: "$90.50", stock: "350 pcs", type: "Dessert", status: "Pending" },
-        { name: "Kiwi", id: "#TL651535", price: "$12.00", stock: "650 kg", type: "Fruits", status: "Active" },
-        { name: "Mango Magic", id: "#GB851535", price: "$100.50", stock: "1200 pcs", type: "Ice Cream", status: "Inactive" },
-        { name: "Joy Care", id: "#ER651535", price: "$59.99", stock: "700 pcs", type: "Care", status: "On Sale" },
-        { name: "Blueberry Bliss", id: "#SD487441", price: "$150.90", stock: "100 lt", type: "Dessert", status: "Bouncing" },
-        { name: "Watermelon", id: "#TL449003", price: "$10.99", stock: "23 lt", type: "Juice", status: "Pending" },
-        { name: "Trilogy", id: "#KP651535", price: "$130.00", stock: "3000 pcs", type: "Oil", status: "Active" },
-        { name: "Dryskin", id: "#GB449003", price: "$40.70", stock: "400 pcs", type: "Cream", status: "Inactive" },
-        { name: "Olive Oil", id: "#SD449003", price: "$35.50", stock: "200 lt", type: "Oil", status: "On Sale" },
-        { name: "Citrus Brust", id: "#ER558612", price: "$9.99", stock: "1200 pcs", type: "Flowers", status: "Bouncing" },
-    ];
+
+    const API_URL ="http://127.0.0.1:8000/api/product"
+
+    const [loading,setloading] = useState(false)
+    const [products, setProducts] = useState([]);
+
+    const [product,setProduct] = useState({
+        name:"",
+        sku:"",
+        category_id:"",
+        supplier_id:"",
+        price:"",
+        quantity:"",
+        description:"",
+        image:"",
+        status:""
+    });
+    //get
+    useEffect(()=>{
+        const fect = async () =>{
+           try {
+             const respone = await fetch(API_URL);
+            if(!respone.ok){
+                throw new Error("Error")
+            }
+            const data = await respone.json();
+            setProducts(data.data)
+           } catch (error) {
+            console.log(error.message);
+           }
+         
+        }
+        if(loading){
+            <h1>loading......</h1>
+        }
+        fect();
+
+    },[])
+    console.log(products);
+
+// delete
+const deleted = async (id) => {
+  if (!id) {
+    console.error("Delete failed: id is undefined");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      throw new Error("Delete request failed");
+    }
+
+    console.log("Product deleted:", id);
+
+    // update UI only
+    setProducts(prev => prev.filter(p => p.id !== id));
+
+    // ✅ STOP HERE — DO NOT CALL deleted() again
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
+
+    const [showModal, setShowModal] = useState(false);
+
+  // Form state
+//   const [product, setProduct] = useState({
+//     name: "",
+//     id: "",
+//     price: "",
+//     stock: "",
+//     type: "",
+//   });
+
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProduct((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Save button handler
+  const handleSave = () => {
+    console.log("Saved Product:", product);
+    setShowModal(false);
+    // Here you can call API or add to state list
+  };
+
+
 
     // Status badge color mapping
     const getStatusColor = (status) => {
@@ -75,12 +159,113 @@ const Product = () => {
                         <h1 className="text-3xl font-bold text-gray-900">Products</h1>
                         <p className="text-gray-600 mt-1">Manage your product inventory and listings</p>
                     </div>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium"
+                    >
                         <FiPlus className="text-lg" />
                         Add New Product
                     </button>
                 </div>
 
+{/* Modal */}
+{showModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 ">
+      {/* Close */}
+      <button
+        onClick={() => setShowModal(false)}
+        className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 text-gray-500 hover:text-gray-800"
+      >
+        <FiX size={24} />
+      </button>
+
+      <h2 className="text-3xl font-bold mb-2 text-gray-800">Add / Edit Product</h2>
+      <p className="text-gray-500 mb-6">Manage your product details here</p>
+
+      {/* Form */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
+          <input
+            type="text"
+            name="name"
+            value={product.name}
+            onChange={handleChange}
+            placeholder="Enter product name"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Product ID</label>
+          <input
+            type="text"
+            name="id"
+            value={product.id}
+            onChange={handleChange}
+            placeholder="Enter product ID"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+          <input
+            type="number"
+            name="price"
+            value={product.price}
+            onChange={handleChange}
+            placeholder="0.00"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Stock</label>
+          <input
+            type="number"
+            name="stock"
+            value={product.stock}
+            onChange={handleChange}
+            placeholder="Enter stock quantity"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+        
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+          <input
+            type="text"
+            name="type"
+            value={product.type}
+            onChange={handleChange}
+            placeholder="Enter product type"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-3 pt-6 border-t">
+        <button
+          onClick={handleDelete}
+          className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-200 shadow hover:shadow-lg"
+        >
+          <FiTrash2 />
+          Delete
+        </button>
+
+        <button
+          onClick={handleSave}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
@@ -169,7 +354,7 @@ const Product = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {products.map((product, index) => (
+                            {products?.map((product, index) => (
                                 <tr key={index} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
@@ -188,24 +373,27 @@ const Product = () => {
                                         <div className="font-bold text-gray-900">{product.price}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${product.stock.includes('23') ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'}`}>
-                                            {product.stock}
+                                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium`}>
+                                            {product.description}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(product.type)}`}>
-                                            {product.type}
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(product.status)}`}>
+                                            {product.quantity}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(product.status)}`}>
                                             {getStatusIcon(product.status)}
-                                            {product.status}
+                                            {product.category.name}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                            <FiMoreVertical className="text-gray-500" />
+                                    <td className="px-6 flex gap-3 py-4">
+                                        <button onClick={()=>deleted(product.id)} className="p-2 bg-red-600 font-bold text-white hover:bg-red-700 rounded-lg transition-colors">
+                                            Delete
+                                        </button>
+                                        <button className="p-2 bg-yellow-300 font-bold text-white hover:bg-yellow-500 rounded-lg transition-colors">
+                                           Update
                                         </button>
                                     </td>
                                 </tr>
@@ -228,8 +416,8 @@ const Product = () => {
                                 <button
                                     key={index}
                                     className={`px-3 py-2 rounded-lg transition-colors ${page === 1
-                                            ? 'bg-blue-600 text-white'
-                                            : 'border border-gray-300 hover:bg-gray-50'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'border border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >
                                     {page}
