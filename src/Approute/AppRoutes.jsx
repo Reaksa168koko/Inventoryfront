@@ -9,10 +9,14 @@ import Supplier from '../Fearture/Surpplier/Supplier'
 import Login from '../Fearture/Auth/Login'
 import Dashboard from '../Fearture/Dashboard/Dashboard'
 import Register from '../Fearture/Auth/Register'
+import ProductDetail from '../Fearture/Products/ProductDetail'
+import EditProduct from '../Fearture/Products/EditProduct'
 
 const AppRoutes = () => {
   return (
+
     <Router>
+      
         <Routes>
             <Route path='/' element={<Login/>}/>
              <Route path="/register" element={<Register />} />
@@ -24,6 +28,8 @@ const AppRoutes = () => {
                 <Route path='/stock' element={<Stock/>}/>
                 <Route path='/supplier' element={<Supplier/>}/>
             </Route>
+            <Route path='/product/:id' element={<ProductDetail/>}/>
+            <Route path='/product/edit/:id' element={<EditProduct/>}/>
         </Routes>
     </Router>
   )
